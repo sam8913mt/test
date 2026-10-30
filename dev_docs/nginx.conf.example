@@ -1,0 +1,45 @@
+# Example Nginx server block (Nginx ignores .htaccess, so these rules must be added by hand).
+server {
+    listen 80;
+    server_name example.ir www.example.ir;
+    root /var/www/borj_afraz_almas_pardis_site;
+    index index.php index.html;
+    charset utf-8;
+
+    # after installing SSL: return 301 https://$host$request_uri;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options SAMEORIGIN always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; font-src 'self'; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml text/plain application/xml;
+
+    # SEO shells (same as the .htaccess rewrites)
+    location = /robots.txt   { rewrite ^ /robots.php last; }
+    location = /sitemap.xml  { rewrite ^ /sitemap.php last; }
+    location = /index.html    { rewrite ^ /index.php last; }
+    location = /building.html { rewrite ^ /building.php last; }
+    location = /page.html     { rewrite ^ /page.php last; }
+    location = /admin.html    { add_header X-Robots-Tag "noindex, nofollow" always; }
+
+    # never serve these
+    location ~ ^/(config\.php|private_config\.php|private_config\.example\.php|README_FA\.txt|data/|dev_docs/|dev_tests/|includes/) { deny all; return 404; }
+    location ~ /\.(?!well-known) { deny all; }
+
+    # uploaded images must never execute
+    location ^~ /uploads/ {
+        location ~ \.(php|phtml|phar)$ { deny all; }
+        expires 1y; add_header Cache-Control "public, immutable"; add_header X-Content-Type-Options nosniff always;
+    }
+    location ~* \.(css|js|webp|png|jpe?g|svg|ico|woff2)$ { expires 30d; add_header Cache-Control "public"; }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;   # adjust to your PHP-FPM socket
+        client_max_body_size 72M;
+    }
+    client_max_body_size 72M;
+}

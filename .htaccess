@@ -1,22 +1,59 @@
 Options -Indexes
-DirectoryIndex index.html
-RewriteEngine On
-RewriteRule ^robots\.txt$ robots.php [L] 
+DirectoryIndex index.php index.html
 
+# ---------------- URL handling ----------------
+RewriteEngine On
+RewriteRule ^robots\.txt$ robots.php [L]
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+# Server-rendered SEO shells. The static .html files still work on their own if these rules are unavailable.
+RewriteRule ^index\.html$ index.php [L]
+RewriteRule ^building\.html$ building.php [L]
+RewriteRule ^page\.html$ page.php [L]
+
+# HTTPS: enable the next 4 lines ONLY after an SSL certificate is installed (otherwise the site becomes unreachable).
+#RewriteCond %{HTTPS} off
+#RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+#RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1|\[::1\])(:[0-9]+)?$ [NC]
+#RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# ---------------- private files ----------------
 <IfModule mod_authz_core.c>
-  <FilesMatch "^(config\.php|private_config\.php)$">
+  <FilesMatch "^(config\.php|private_config\.php|\.user\.ini|README_FA\.txt|private_config\.example\.php)$">
     Require all denied
   </FilesMatch>
 </IfModule>
 <IfModule !mod_authz_core.c>
-  <FilesMatch "^(config\.php|private_config\.php)$">
+  <FilesMatch "^(config\.php|private_config\.php|\.user\.ini|README_FA\.txt|private_config\.example\.php)$">
     Order allow,deny
     Deny from all
   </FilesMatch>
 </IfModule>
+
+# ---------------- security headers ----------------
+<IfModule mod_setenvif.c>
+  SetEnvIf HTTPS "on" IS_TLS=1
+  SetEnvIf X-Forwarded-Proto "https" IS_TLS=1
+</IfModule>
 <IfModule mod_headers.c>
- Header always set X-Content-Type-Options "nosniff"
- Header always set X-Frame-Options "SAMEORIGIN"
- Header always set Referrer-Policy "strict-origin-when-cross-origin"
- Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; font-src 'self'; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
+  Header always set Strict-Transport-Security "max-age=15552000" env=IS_TLS
+  <FilesMatch "^admin\.html$">
+    Header always set X-Robots-Tag "noindex, nofollow"
+  </FilesMatch>
+  # ---------------- caching (asset links carry ?v=VERSION; bump it on each deploy) ----------------
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+  <FilesMatch "\.(webp|png|jpe?g|svg|ico|woff2)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+</IfModule>
+
+# ---------------- compression ----------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/javascript application/json application/xml image/svg+xml
 </IfModule>
