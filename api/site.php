@@ -48,15 +48,26 @@ try {
         ['q'=>'آیا می‌توانم تصاویر و مشخصات پروژه‌ها را ببینم؟','a'=>'بله؛ در صورت ثبت و انتشار اطلاعات هر ساختمان، صفحه جزئیات آن شامل تصاویر موجود و مشخصات ثبت‌شده نمایش داده می‌شود.'],
         ['q'=>'چه اطلاعاتی برای ارسال درخواست لازم است؟','a'=>'نام، شماره تماس و توضیح کوتاه درباره موضوع درخواست ضروری است. ایمیل و انتخاب پروژه اختیاری هستند.']
     ];
-    $keys = ['tagline','about','phone','email','address','founded_year','registration_number','company_manager','credentials'];
+    $keys = ['tagline','about','phone','email','address','founded_year','registration_number','company_manager','credentials','testimonials'];
     $settings = [];
     foreach ($keys as $key) {
         $fallback = match ($key) { 'tagline'=>SITE_TAGLINE, 'phone'=>SITE_PHONE, 'address'=>SITE_ADDRESS, default=>'' };
         $settings[$key] = setting($key, $fallback);
     }
+    // Gallery: up to 3 images per published project, 12 in total (thumbnail + full size + link to the project).
+    $gallery = [];
+    foreach (db()->query('SELECT * FROM projects WHERE is_published=1 ORDER BY featured DESC, id DESC LIMIT 20')->fetchAll(PDO::FETCH_ASSOC) as $gp) {
+        $n = 0;
+        foreach (all_project_images($gp) as $img) {
+            if (!is_file(UPLOAD_DIR . $img)) continue;
+            $gallery[] = ['thumb' => image_url($img, true), 'full' => image_url($img), 'title' => (string)$gp['title'], 'url' => project_url($gp)];
+            if (++$n >= 3 || count($gallery) >= 12) break;
+        }
+        if (count($gallery) >= 12) break;
+    }
     echo json_encode([
         'ok'=>true, 'csrf'=>public_csrf_token(), 'site'=>['name'=>SITE_NAME, 'url'=>site_url(), 'logo'=>'assets/logo.webp'],
-        'settings'=>$settings, 'projects'=>$projects, 'total'=>$total, 'page'=>$page, 'perPage'=>$perPage, 'services'=>$services, 'allProjects'=>$allProjects, 'faq'=>$faq,
+        'settings'=>$settings, 'projects'=>$projects, 'total'=>$total, 'page'=>$page, 'perPage'=>$perPage, 'services'=>$services, 'allProjects'=>$allProjects, 'faq'=>$faq, 'gallery'=>$gallery,
         'selectedProject'=>trim((string)($_GET['project'] ?? ''))
     ], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_AMP|JSON_HEX_QUOT);
 } catch (Throwable $e) {

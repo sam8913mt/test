@@ -45,6 +45,9 @@
     renderProjects(shownProjects, query, status, data.total);
     $('#load-more').hidden = shownProjects.length >= data.total;
     if (data.services.length) { $('#services-section').hidden = false; $('#services-grid').innerHTML = data.services.map(sv=>`<article class="service-card"><div class="service-icon">${esc(sv.icon || '◆')}</div><h3>${esc(sv.title)}</h3><p>${nl2br(sv.description)}</p></article>`).join(''); }
+    if (data.gallery && data.gallery.length) { $('#gallery').hidden = false; $('#gallery-grid').innerHTML = data.gallery.map(g=>`<a class="gallery-item" href="${esc(g.url)}" title="${esc(g.title)}"><img loading="lazy" decoding="async" src="${esc(g.thumb)}" alt="${esc(g.title)}"><span>${esc(g.title)}</span></a>`).join(''); } else { $('#gallery').hidden = true; }
+    const reviews = String(s.testimonials || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => { const i = line.indexOf('|'); return i > 0 ? {name: line.slice(0, i).trim(), text: line.slice(i + 1).trim()} : {name: '', text: line}; }).filter(r => r.text).slice(0, 9);
+    if (reviews.length) { $('#testimonials').hidden = false; $('#testimonials-grid').innerHTML = reviews.map(r=>`<figure class="testimonial-card"><blockquote>${esc(r.text)}</blockquote>${r.name ? `<figcaption>${esc(r.name)}</figcaption>` : ''}</figure>`).join(''); } else { $('#testimonials').hidden = true; }
     $('#faq-list').innerHTML = data.faq.map(item=>`<details class="faq-item"><summary>${esc(item.q)}</summary><p>${esc(item.a)}</p></details>`).join('');
     const schema = {'@context':'https://schema.org','@type':'Organization','name':data.site.name,'telephone':s.phone,'address':{'@type':'PostalAddress','addressLocality':'پردیس','addressCountry':'IR'},'url':data.site.url};
     $('#organization-schema').textContent = JSON.stringify(schema);

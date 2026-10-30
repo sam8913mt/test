@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/functions.php';
 require_admin();
 
-const SETTING_KEYS = ['about','phone','email','address','tagline','founded_year','registration_number','company_manager','credentials'];
+const SETTING_KEYS = ['about','phone','email','address','tagline','founded_year','registration_number','company_manager','credentials','testimonials'];
 
 function admin_data(int $contactsLimit = 100): array {
     $contactsLimit = max(20, min(1000, $contactsLimit));
