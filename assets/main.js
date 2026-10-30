@@ -77,5 +77,17 @@
     } catch (error) { show('alert', 'ارتباط با سرور برقرار نشد. دوباره تلاش کنید.'); }
     finally { submit.disabled = false; }
   });
+  // ---- full pages shown on the home page (content comes from the admin panel > pages) ----
+  // Edit this list to choose which pages appear and in what order: 'about', 'services', 'privacy'
+  const HOME_PAGES = ['about', 'services'];
+  async function loadHomePages() {
+    const box = $('#home-pages'); if (!box) return;
+    const results = await Promise.all(HOME_PAGES.map(slug =>
+      fetch(`api/page.php?slug=${encodeURIComponent(slug)}`, {headers:{'Accept':'application/json'}, credentials:'same-origin'})
+        .then(r => r.ok ? r.json() : null).catch(() => null)));
+    box.innerHTML = results.filter(d => d && d.ok && String(d.page.content || '').trim()).map(d =>
+      `<section class="section home-page" id="page-${esc(d.page.slug)}"><div class="section-heading"><div><span class="eyebrow blue">${esc(d.site.name)}</span><h2>${esc(d.page.title)}</h2></div></div><article class="content-body">${nl2br(d.page.content)}</article></section>`).join('');
+  }
+  loadHomePages();
   loadSite().catch(error => { $('#results-count').textContent = error.message; $('#empty-projects').hidden = false; $('#empty-title').textContent = 'بارگذاری اطلاعات ناموفق بود'; $('#empty-description').textContent = 'لطفاً اتصال به سرور را بررسی و صفحه را تازه‌سازی کنید.'; });
 })();
