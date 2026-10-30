@@ -94,3 +94,15 @@
   loadHomePages();
   loadSite().catch(error => { $('#results-count').textContent = error.message; $('#empty-projects').hidden = false; $('#empty-title').textContent = 'بارگذاری اطلاعات ناموفق بود'; $('#empty-description').textContent = 'لطفاً اتصال به سرور را بررسی و صفحه را تازه‌سازی کنید.'; });
 })();
+
+// ---- scroll reveal (cosmetic; content stays visible if IntersectionObserver is missing) ----
+(function () {
+  if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.documentElement.classList.add('js-reveal');
+  const io = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold: 0.12, rootMargin: '0px 0px -40px 0px'});
+  const SEL = '.section-heading,.project-card,.fact-card,.testimonial-card,.gallery-item,.faq-item,.contact-card,.contact-form-wrap,.about-copy,.about-art,.content-body,.trust-strip>*';
+  const seen = new WeakSet();
+  const scan = root => (root.querySelectorAll ? root.querySelectorAll(SEL) : []).forEach(el => { if (seen.has(el)) return; seen.add(el); el.classList.add('reveal'); io.observe(el); });
+  scan(document);
+  new MutationObserver(list => list.forEach(r => r.addedNodes.forEach(n => { if (n.nodeType === 1) { if (n.matches && n.matches(SEL) && !seen.has(n)) { seen.add(n); n.classList.add('reveal'); io.observe(n); } scan(n); } }))).observe(document.body, {childList: true, subtree: true});
+})();
