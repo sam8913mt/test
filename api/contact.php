@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Allow: POST');
     json_response(['ok' => false, 'message' => 'روش درخواست مجاز نیست.'], 405);
 }
-verify_public_csrf();
+verify_csrf();
 
 try {
     // Honeypot field: real visitors leave it empty. Bots get a fake success.
@@ -39,15 +39,16 @@ try {
     $projectTitle = '';
     if ($projectId === false || $projectId === null || $projectId < 0) contact_fail('پروژه انتخاب‌شده معتبر نیست.');
     if ($projectId > 0) {
-        $projectStmt = db()->prepare('SELECT title FROM projects WHERE id = ? AND is_published = 1');
+        $projectStmt = db()->prepare('SELECT title FROM projects WHERE id = ?');
         $projectStmt->execute([$projectId]);
         $foundTitle = $projectStmt->fetchColumn();
         if ($foundTitle === false) contact_fail('پروژه انتخاب‌شده پیدا نشد؛ لطفاً دوباره انتخاب کنید.');
         $projectTitle = (string)$foundTitle;
     }
 
-    // One-way pseudonymous IP hash (HMAC with a secret salt); the real visitor IP is used even behind a trusted proxy/CDN.
-    $ipHash = ip_hash();
+    // One-way pseudonymous IP hash for modest abuse prevention; raw IPs are not retained.
+    $ip = (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    $ipHash = hash('sha256', $ip . '|' . DB_FILE);
     $rate = db()->prepare("SELECT COUNT(*) FROM contact_requests WHERE ip_hash = ? AND created_at >= datetime('now', '-1 hour')");
     $rate->execute([$ipHash]);
     if ((int)$rate->fetchColumn() >= 5) contact_fail('تعداد درخواست‌ها از این اتصال بیش از حد مجاز است. لطفاً کمی بعد دوباره تلاش کنید.', 429);
@@ -57,12 +58,7 @@ try {
 
     $insert = db()->prepare('INSERT INTO contact_requests(name, phone, email, topic, project_title, message, ip_hash) VALUES(?,?,?,?,?,?,?)');
     $insert->execute([$name, $phone, $email, $topic, $projectTitle, $message, $ipHash]);
-    $payload = ['name' => $name, 'phone' => $phone, 'email' => $email, 'topic' => $topic, 'project_title' => $projectTitle, 'message' => $message];
-    respond_and_continue(
-        ['ok' => true, 'message' => 'درخواست شما با موفقیت ثبت شد. برای پیگیری، همکاران شرکت می‌توانند از اطلاعات تماس واردشده استفاده کنند.'],
-        static function () use ($payload): void { notify_new_contact($payload); }   // runs after the visitor already got the answer
-    );
+    json_response(['ok' => true, 'message' => 'درخواست شما با موفقیت ثبت شد. برای پیگیری، همکاران شرکت می‌توانند از اطلاعات تماس واردشده استفاده کنند.']);
 } catch (Throwable $e) {
-    log_exception($e, 'contact.php');
     json_response(['ok' => false, 'message' => 'ثبت درخواست ناموفق بود. لطفاً بعداً دوباره تلاش کنید.'], 500);
 }

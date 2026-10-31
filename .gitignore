@@ -11,5 +11,4 @@
 *.log
 *.bak
 *.sql
-/data/*.moved-backup
-/dev_tests/*.png
+!/migrations/*.sql

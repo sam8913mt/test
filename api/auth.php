@@ -14,7 +14,6 @@ verify_csrf();
 $action = (string)($_POST['action'] ?? 'login');
 
 if ($action === 'logout') {
-    if (is_admin()) audit('logout');
     $_SESSION = [];
     if (ini_get('session.use_cookies')) {
         $p = session_get_cookie_params();
@@ -33,21 +32,11 @@ if (admin_login_is_limited()) {
 }
 $username = (string)($_POST['username'] ?? '');
 $password = (string)($_POST['password'] ?? '');
-try {
-    $okUser = hash_equals(ADMIN_USERNAME, $username);
-    $okPass = password_verify($password, admin_password_hash());   // always verified, so timing does not reveal which part was wrong
-    if ($okUser && $okPass) {
-        admin_login_clear_failures();
-        session_regenerate_id(true);
-        $_SESSION['admin_logged_in'] = true;
-        $_SESSION['login_at'] = $_SESSION['last_seen'] = time();
-        audit('login');
-        json_response(['ok' => true, 'csrf' => csrf_token()]);
-    }
-    admin_login_record_failure();
-    audit('login_failed');
-} catch (Throwable $e) {
-    log_exception($e, 'auth.php');
-    json_response(['ok' => false, 'message' => 'خطای داخلی سرور؛ ورود انجام نشد.'], 500);
+if (hash_equals(ADMIN_USERNAME, $username) && password_verify($password, ADMIN_PASSWORD_HASH)) {
+    admin_login_clear_failures();
+    session_regenerate_id(true);
+    $_SESSION['admin_logged_in'] = true;
+    json_response(['ok' => true, 'csrf' => csrf_token()]);
 }
+admin_login_record_failure();
 json_response(['ok' => false, 'message' => 'نام کاربری یا رمز عبور اشتباه است.'], 401);
