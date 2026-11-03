@@ -1,0 +1,70 @@
+Options -Indexes
+DirectoryIndex index.html
+RewriteEngine On
+
+# --- آدرس رسمی سایت: https بدون www (برای همه نسخه‌های http/https و www/non-www) ---
+# قوانین برای localhost و مسیرهای تأیید SSL (AutoSSL / Let's Encrypt) اعمال نمی‌شود.
+RewriteCond %{REQUEST_URI} !^/\.well-known/ [NC]
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:[0-9]+)?$ [NC]
+RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
+
+RewriteCond %{REQUEST_URI} !^/\.well-known/ [NC]
+RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:[0-9]+)?$ [NC]
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+RewriteRule ^robots\.txt$ robots.php [L]
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
+<IfModule mod_authz_core.c>
+  <FilesMatch "^(config\.php|private_config\.php)$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+  <FilesMatch "^(config\.php|private_config\.php)$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+</IfModule>
+<IfModule mod_headers.c>
+ Header always set X-Content-Type-Options "nosniff"
+ Header always set X-Frame-Options "SAMEORIGIN"
+ Header always set Referrer-Policy "strict-origin-when-cross-origin"
+ Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+
+# --- سئو و سرعت ---
+AddDefaultCharset UTF-8
+# در محیط واقعی، آدرس دامنه را برای sitemap و robots مشخص کنید (خط زیر را فعال و آدرس را عوض کنید):
+# SetEnv SITE_BASE_URL https://example.ir
+# پس از اطمینان از کارکرد کامل https، می‌توانید HSTS را فعال کنید (برگشت‌پذیر نیست؛ ابتدا با max-age کوتاه امتحان کنید):
+# Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+# صفحه خطای ۴۰۴ (مسیر را مطابق محل نصب تنظیم کنید):
+# ErrorDocument 404 /404.html
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript text/javascript application/json application/xml image/svg+xml
+</IfModule>
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType text/javascript "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+</IfModule>
+
+# --- جلوگیری از دسترسی عمومی به فایل‌های داخلی، لاگ‌ها و پشتیبان‌ها ---
+<FilesMatch "^(error_log|README_FA\.txt|private_config\.example\.php)$|\.(log|bak|sql|sqlite|sqlite3|db|md|example)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
