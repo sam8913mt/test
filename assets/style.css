@@ -178,3 +178,5 @@
 
 .faq-import{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:10px 0 14px}
 .faq-item[hidden]{display:none}
+
+.contact-card .contact-note{margin:10px 0 16px;color:#d6e4f7;font-size:13px;line-height:2.1}.contact-card #call-link{display:inline-flex;align-items:center;gap:8px}
