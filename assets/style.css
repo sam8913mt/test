@@ -182,3 +182,6 @@
 .contact-card .contact-note{margin:10px 0 16px;color:#d6e4f7;font-size:13px;line-height:2.1}.contact-card #call-link{display:inline-flex;align-items:center;gap:8px}
 
 .wa-panel{background:#fff;color:var(--text);padding:34px 30px;border-radius:20px;box-shadow:0 18px 50px #06142a20;display:flex;flex-direction:column;align-items:flex-start;gap:14px}.wa-panel .wa-icon{width:52px;height:52px;border-radius:50%;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px}.wa-panel h3{font-size:22px;margin:0}.wa-panel p{font-size:13px;line-height:2.1;color:var(--muted);margin:0}.wa-panel .btn{background:#25d366;border-color:#25d366;color:#fff}.wa-panel .privacy-note{font-size:11px;color:#6c7d93}
+
+@media(min-width:901px){.contact-section{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch;gap:40px}.contact-intro{display:flex;flex-direction:column}.contact-intro .contact-card{flex:1;margin-top:24px}.contact-form-wrap{display:flex}.wa-panel{width:100%;justify-content:center;align-items:center;text-align:center;padding:40px 34px}.wa-panel p{max-width:380px}}
+@media(max-width:900px){.wa-panel{align-items:center;text-align:center}}
