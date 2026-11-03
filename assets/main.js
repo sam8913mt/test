@@ -84,10 +84,6 @@
     if (String(s.about || '').trim()) $('#about-text').innerHTML = nl2br(s.about);
     const facts = [['سال آغاز فعالیت',s.founded_year],['شماره ثبت',s.registration_number],['مدیرعامل / مسئول معرفی',s.company_manager],['مجوزها و سوابق',s.credentials]].filter(x => String(x[1] || '').trim());
     if (facts.length) { $('#company-facts').hidden = false; $('#facts-grid').innerHTML = facts.map(([k,v])=>`<article class="fact-card"><span>${esc(k)}</span><strong>${nl2br(v)}</strong></article>`).join(''); }
-    $('#csrf-token').value = data.csrf;
-    $('#project-select').innerHTML = '<option value="0">انتخاب نشده</option>' + data.allProjects.map(p=>`<option value="${p.id}">${esc(p.title)}</option>`).join('');
-    const wantedProject = new URLSearchParams(location.search).get('project') || data.selectedProject;
-    if (wantedProject) { const target = data.allProjects.find(p => String(p.id) === wantedProject || String(p.title) === wantedProject); if (target) $('#project-select').value = String(target.id); }
     renderProjects(data.projects, query, status);
     if (data.services.length) { $('#services-section').hidden = false; $('#services-grid').innerHTML = data.services.map(sv=>`<article class="service-card"><div class="service-icon">${esc(sv.icon || '◆')}</div><h3>${esc(sv.title)}</h3><p>${nl2br(sv.description)}</p></article>`).join(''); }
     if (!homeRendered) { renderStats(data.stats); renderFeatured(data.featured); renderArticles(data.articles); homeRendered = true; }
@@ -110,19 +106,5 @@
     try { $('#results-count').textContent = 'در حال جست‌وجو…'; await loadSite(q, status); } catch (error) { $('#results-count').textContent = error.message; }
   });
   $('#clear-filter').addEventListener('click', async event => { event.preventDefault(); $('#project-filters').reset(); try { await loadSite(); } catch (error) { $('#results-count').textContent = error.message; } });
-  $('#contact-form').addEventListener('submit', async event => {
-    event.preventDefault();
-    const form = event.currentTarget, box = $('#contact-message'), submit = form.querySelector('button[type=submit]');
-    const show = (type, text) => { box.hidden = false; box.className = type; box.textContent = text; box.scrollIntoView({behavior:'smooth', block:'nearest'}); };
-    if (!$('#csrf-token').value) { show('alert', 'ارتباط با سرور برقرار نشد. صفحه را تازه‌سازی کنید و دوباره تلاش کنید.'); return; }
-    submit.disabled = true;
-    try {
-      const response = await fetch('api/contact.php', {method:'POST', body:new FormData(form), credentials:'same-origin', headers:{'Accept':'application/json'}});
-      let result = {}; try { result = await response.json(); } catch (e) { /* non-JSON response */ }
-      if (response.ok && result.ok) { show('success', result.message || 'درخواست شما ثبت شد.'); const token = $('#csrf-token').value; form.reset(); $('#csrf-token').value = token; }
-      else show('alert', result.message || 'ثبت درخواست ناموفق بود.');
-    } catch (error) { show('alert', 'ارتباط با سرور برقرار نشد. دوباره تلاش کنید.'); }
-    finally { submit.disabled = false; }
-  });
   loadSite().catch(error => { $('#results-count').textContent = error.message; $('#empty-projects').hidden = false; $('#empty-title').textContent = 'بارگذاری اطلاعات ناموفق بود'; $('#empty-description').textContent = 'لطفاً اتصال به سرور را بررسی و صفحه را تازه‌سازی کنید.'; });
 })();

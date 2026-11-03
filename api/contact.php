@@ -9,6 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Allow: POST');
     json_response(['ok' => false, 'message' => 'روش درخواست مجاز نیست.'], 405);
 }
+// فرم مشاوره از سایت حذف شده است؛ این آدرس دیگر درخواستی نمی‌پذیرد.
+json_response(['ok' => false, 'message' => 'ثبت درخواست از طریق فرم غیرفعال است.'], 410);
 verify_csrf();
 
 try {
